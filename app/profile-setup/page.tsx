@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabase } from '@/lib/auth-provider';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Display name must be at least 2 characters'),
@@ -107,6 +108,9 @@ export default function ProfileSetupPage() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Complete Your Profile</CardTitle>

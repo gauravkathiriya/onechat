@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface Message {
   id: string;
@@ -316,6 +317,8 @@ export default function ChatPage() {
         <h1 className="text-xl font-bold">OneChat</h1>
         
         <div className="flex items-center gap-4">
+          <ThemeToggle />
+          
           <Button 
             variant="outline" 
             size="sm" 

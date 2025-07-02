@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useSupabase } from '@/lib/auth-provider';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -73,6 +74,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{isLogin ? 'Login' : 'Sign Up'}</CardTitle>

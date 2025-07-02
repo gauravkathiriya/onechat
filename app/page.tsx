@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function HomePage() {
   const { user, isLoading } = useSupabase();
@@ -32,6 +33,9 @@ export default function HomePage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="container mx-auto px-4 py-16 flex flex-col items-center">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
