@@ -314,7 +314,9 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">OneChat</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold">OneChat Global Chat</h1>
+        </div>
         
         <div className="flex items-center gap-4">
           <ThemeToggle />
@@ -331,6 +333,14 @@ export default function ChatPage() {
               {onlineUsers.filter(u => u.is_online).length}
             </Badge>
             Online Users
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+          >
+            Dashboard
           </Button>
           
           {user && (

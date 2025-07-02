@@ -17,7 +17,7 @@ export default function HomePage() {
         if (!user.user_metadata?.has_completed_profile) {
           router.push('/profile-setup');
         } else {
-          router.push('/chat');
+          router.push('/dashboard');
         }
       }
     }
@@ -72,13 +72,13 @@ export default function HomePage() {
           />
           <FeatureCard 
             icon="/file.svg"
-            title="User Profiles"
-            description="Customize your profile with a display name and avatar to stand out."
+            title="Direct Messages"
+            description="Start private conversations with other users by adding them via email."
           />
           <FeatureCard 
             icon="/window.svg"
-            title="Emoji Support"
-            description="Express yourself with a wide range of emojis using our built-in emoji picker."
+            title="User Profiles"
+            description="Customize your profile with a display name and avatar to stand out."
           />
         </div>
       </div>

@@ -57,7 +57,7 @@ export function SupabaseProvider({
         if (event === 'SIGNED_IN' && !session?.user?.user_metadata?.has_completed_profile) {
           router.push('/profile-setup');
         } else if (event === 'SIGNED_IN') {
-          router.push('/chat');
+          router.push('/dashboard');
         } else if (event === 'SIGNED_OUT') {
           router.push('/login');
         }
