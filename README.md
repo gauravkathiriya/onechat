@@ -1,24 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OneChat - Real-time Chat Application
 
-## Getting Started
+A modern real-time chat application built with Next.js and Supabase.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 🔐 **User Authentication**
+  - Login/Signup via Supabase Auth
+  - Secure session management
+  - Profile setup with display name and avatar
+
+- 💬 **Real-time Messaging**
+  - Global chat room for all users
+  - Messages delivered instantly with Supabase Realtime
+  - Auto-scroll to latest messages
+
+- 👤 **User Profiles**
+  - Custom display names
+  - Profile pictures (uploaded to Supabase Storage)
+  - User avatars shown with messages
+
+- 😀 **Emoji Support**
+  - Add emojis to messages with an emoji picker
+
+## Technology Stack
+
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+- **Backend**: Supabase (Auth, Database, Storage, Realtime)
+- **Styling**: shadcn/ui components
+
+## Setup
+
+### Prerequisites
+
+- Node.js (v18 or newer)
+- Supabase account and project
+
+### Supabase Setup
+
+1. Create a new Supabase project
+2. Run the SQL commands in `supabase-setup.sql` in the Supabase SQL editor
+3. Enable Email Auth in Authentication settings
+4. Create a storage bucket named `user-avatars` with public access
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the application.
+
+## Application Flow
+
+1. Users sign up or log in
+2. First-time users complete their profile setup
+3. After authentication, users are redirected to the chat page
+4. Messages are delivered in real-time to all connected users
+
+## License
+
+MIT
 
 ## Learn More
 
