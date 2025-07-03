@@ -62,13 +62,13 @@ export default function ChatPage() {
   const [editedContent, setEditedContent] = useState('');
   const [showUsersDialog, setShowUsersDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login');
     }
   }, [user, isLoading, router]);
-  
+
   const fetchMessages = async () => {
     try {
       const { data, error } = await supabase
@@ -76,7 +76,7 @@ export default function ChatPage() {
         .select('*, user:profiles(id, display_name, avatar_url, email, last_seen)')
         .order('created_at', { ascending: true })
         .limit(100);
-        
+
       if (error) throw error;
       setMessages(data || []);
       scrollToBottom();
@@ -97,7 +97,7 @@ export default function ChatPage() {
 
       // Consider users who were active in the last 5 minutes as online
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
+
       setOnlineUsers(
         data.map(profile => ({
           ...profile,
@@ -108,12 +108,12 @@ export default function ChatPage() {
       console.error('Error fetching online users:', error);
     }
   };
-  
+
   useEffect(() => {
     if (user) {
       fetchMessages();
       fetchOnlineUsers();
-      
+
       // Subscribe to new messages
       const messagesChannel = supabase
         .channel('public:messages')
@@ -128,12 +128,12 @@ export default function ChatPage() {
             .select('*, user:profiles(id, display_name, avatar_url, email, last_seen)')
             .eq('id', payload.new.id)
             .single();
-            
+
           if (error) {
             console.error('Error fetching new message details:', error);
             return;
           }
-          
+
           if (data) {
             setMessages(prev => [...prev, data]);
             scrollToBottom();
@@ -144,10 +144,10 @@ export default function ChatPage() {
           schema: 'public',
           table: 'messages'
         }, (payload) => {
-          setMessages(prev => 
-            prev.map(message => 
-              message.id === payload.new.id 
-                ? { ...message, ...payload.new } 
+          setMessages(prev =>
+            prev.map(message =>
+              message.id === payload.new.id
+                ? { ...message, ...payload.new }
                 : message
             )
           );
@@ -165,23 +165,23 @@ export default function ChatPage() {
         }, (payload) => {
           // Update last seen status
           const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-          
-          setOnlineUsers(prev => 
-            prev.map(profile => 
-              profile.id === payload.new.id 
-                ? { 
-                    ...profile, 
-                    ...payload.new,
-                    is_online: payload.new.last_seen ? 
-                      new Date(payload.new.last_seen) > new Date(fiveMinutesAgo) : 
-                      false 
-                  } 
+
+          setOnlineUsers(prev =>
+            prev.map(profile =>
+              profile.id === payload.new.id
+                ? {
+                  ...profile,
+                  ...payload.new,
+                  is_online: payload.new.last_seen ?
+                    new Date(payload.new.last_seen) > new Date(fiveMinutesAgo) :
+                    false
+                }
                 : profile
             )
           );
         })
         .subscribe();
-        
+
       // Update user's last_seen every minute
       const interval = setInterval(async () => {
         try {
@@ -193,7 +193,7 @@ export default function ChatPage() {
           console.error('Error updating last_seen:', error);
         }
       }, 60000);
-      
+
       return () => {
         supabase.removeChannel(messagesChannel);
         supabase.removeChannel(profilesChannel);
@@ -201,20 +201,20 @@ export default function ChatPage() {
       };
     }
   }, [supabase, user]);
-  
+
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
-  
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() || !user) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const { error } = await supabase
         .from('messages')
@@ -224,9 +224,9 @@ export default function ChatPage() {
             user_id: user.id,
           }
         ]);
-        
+
       if (error) throw error;
-      
+
       setNewMessage('');
     } catch (error: any) {
       toast.error('Error sending message: ' + error.message);
@@ -258,7 +258,7 @@ export default function ChatPage() {
         });
 
       if (error) throw error;
-      
+
       setEditingMessageId(null);
       setEditedContent('');
     } catch (error: any) {
@@ -275,14 +275,14 @@ export default function ChatPage() {
         .eq('user_id', user?.id);
 
       if (error) throw error;
-      
+
       setMessages(prev => prev.filter(message => message.id !== messageId));
       toast.success('Message deleted');
     } catch (error: any) {
       toast.error('Error deleting message: ' + error.message);
     }
   };
-  
+
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     if (editingMessageId) {
       setEditedContent(prev => prev + emojiData.emoji);
@@ -302,7 +302,7 @@ export default function ChatPage() {
     const userStatus = onlineUsers.find(u => u.id === userId);
     return userStatus?.is_online || false;
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -315,15 +315,15 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen">
       <header className="border-b p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">OneChat Global Chat</h1>
+          <h1 className="text-xl font-bold">OneChat</h1>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               fetchOnlineUsers();
               setShowUsersDialog(true);
@@ -334,7 +334,7 @@ export default function ChatPage() {
             </Badge>
             Online Users
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -342,7 +342,7 @@ export default function ChatPage() {
           >
             Dashboard
           </Button>
-          
+
           {user && (
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -365,14 +365,13 @@ export default function ChatPage() {
           )}
         </div>
       </header>
-      
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex items-start gap-2 ${
-              message.user_id === user?.id ? 'justify-end' : 'justify-start'
-            }`}
+            className={`flex items-start gap-2 ${message.user_id === user?.id ? 'justify-end' : 'justify-start'
+              }`}
           >
             {message.user_id !== user?.id && (
               <div className="relative">
@@ -390,20 +389,19 @@ export default function ChatPage() {
                 )}
               </div>
             )}
-            
+
             <div
-              className={`max-w-[70%] px-4 py-2 rounded-lg ${
-                message.user_id === user?.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700'
-              }`}
+              className={`max-w-[70%] px-4 py-2 rounded-lg ${message.user_id === user?.id
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 dark:bg-gray-700'
+                }`}
             >
               {message.user_id !== user?.id && (
                 <p className="text-xs font-medium mb-1">
                   {message.user?.display_name || message.user?.email}
                 </p>
               )}
-              
+
               {editingMessageId === message.id ? (
                 <div className="space-y-2">
                   <Textarea
@@ -420,16 +418,16 @@ export default function ChatPage() {
                     }}
                   />
                   <div className="flex gap-2 justify-end">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={cancelEditMessage}
                       className="h-7 px-2 text-xs"
                     >
                       <X className="h-3 w-3 mr-1" /> Cancel
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={() => saveEditedMessage(message.id)}
                       className="h-7 px-2 text-xs"
                     >
@@ -440,7 +438,7 @@ export default function ChatPage() {
               ) : (
                 <p className="whitespace-pre-wrap">{message.content}</p>
               )}
-              
+
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs opacity-70">
                   {new Date(message.created_at).toLocaleTimeString([], {
@@ -451,7 +449,7 @@ export default function ChatPage() {
                     <span className="ml-1">(edited)</span>
                   )}
                 </p>
-                
+
                 {message.user_id === user?.id && !editingMessageId && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -464,7 +462,7 @@ export default function ChatPage() {
                         <Pencil className="h-3.5 w-3.5 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => deleteMessage(message.id)}
                         className="text-red-500 focus:text-red-500"
                       >
@@ -476,7 +474,7 @@ export default function ChatPage() {
                 )}
               </div>
             </div>
-            
+
             {message.user_id === user?.id && (
               <div className="relative">
                 <Avatar className="h-8 w-8">
@@ -495,7 +493,7 @@ export default function ChatPage() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      
+
       <div className="border-t p-4">
         <form onSubmit={sendMessage} className="flex gap-2 relative">
           <Textarea
@@ -510,7 +508,7 @@ export default function ChatPage() {
               }
             }}
           />
-          
+
           <div className="flex flex-col gap-2">
             <Button
               type="button"
@@ -520,12 +518,12 @@ export default function ChatPage() {
             >
               <Smile className="h-5 w-5" />
             </Button>
-            
+
             <Button type="submit" disabled={isSubmitting || !newMessage.trim()}>
               Send
             </Button>
           </div>
-          
+
           {showEmojiPicker && (
             <div className="absolute bottom-full right-0 mb-2">
               <EmojiPicker onEmojiClick={handleEmojiClick} />
@@ -557,10 +555,10 @@ export default function ChatPage() {
                   <div>
                     <p className="font-medium">{user.display_name}</p>
                     <p className="text-xs text-gray-500">
-                      {user.is_online 
-                        ? 'Online now' 
-                        : user.last_seen 
-                          ? `Last seen ${formatDistanceToNow(new Date(user.last_seen))} ago` 
+                      {user.is_online
+                        ? 'Online now'
+                        : user.last_seen
+                          ? `Last seen ${formatDistanceToNow(new Date(user.last_seen))} ago`
                           : 'Never seen'}
                     </p>
                   </div>

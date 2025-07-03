@@ -9,7 +9,7 @@ import { useAuthRedirect } from '@/lib/use-auth-redirect';
 export default function HomePage() {
   const { isAutoLoggingIn } = useAuthRedirect();
   const router = useRouter();
-  
+
   if (isAutoLoggingIn) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -19,7 +19,7 @@ export default function HomePage() {
             <span className="text-4xl font-bold">Chat</span>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-center">
           <div className="h-2 w-24 bg-blue-600 dark:bg-blue-400 rounded-full mb-3 animate-pulse"></div>
           <p className="text-sm text-muted-foreground">Checking login status...</p>
@@ -27,7 +27,7 @@ export default function HomePage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="absolute top-4 right-4">
@@ -41,16 +41,16 @@ export default function HomePage() {
           <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-600 dark:text-gray-300">
             A modern real-time chat application. Connect instantly with friends and colleagues.
           </p>
-          
+
           <div className="flex flex-wrap justify-center gap-4">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => router.push('/login')}
               className="bg-blue-600 hover:bg-blue-700"
             >
               Get Started
             </Button>
-            
+
             <Button
               size="lg"
               variant="outline"
@@ -60,19 +60,14 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
-          <FeatureCard 
-            icon="/globe.svg"
-            title="Global Chat"
-            description="Chat with everyone in a single global stream. Messages are delivered in real-time."
-          />
-          <FeatureCard 
+          <FeatureCard
             icon="/file.svg"
             title="Direct Messages"
             description="Start private conversations with other users by adding them via email."
           />
-          <FeatureCard 
+          <FeatureCard
             icon="/window.svg"
             title="User Profiles"
             description="Customize your profile with a display name and avatar to stand out."
@@ -83,14 +78,14 @@ export default function HomePage() {
   );
 }
 
-function FeatureCard({ 
-  icon, 
-  title, 
-  description 
-}: { 
-  icon: string; 
-  title: string; 
-  description: string 
+function FeatureCard({
+  icon,
+  title,
+  description
+}: {
+  icon: string;
+  title: string;
+  description: string
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center text-center transition-transform hover:scale-105">

@@ -5,16 +5,18 @@ A modern real-time chat application built with Next.js and Supabase.
 ## Features
 
 - 🔐 **User Authentication**
+
   - Login/Signup via Supabase Auth
   - Secure session management
   - Profile setup with display name and avatar
 
 - 💬 **Real-time Messaging**
-  - Global chat room for all users
+
   - Messages delivered instantly with Supabase Realtime
   - Auto-scroll to latest messages
 
 - 👤 **User Profiles**
+
   - Custom display names
   - Profile pictures (uploaded to Supabase Storage)
   - User avatars shown with messages

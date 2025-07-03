@@ -8,17 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from 'sonner';
-import { 
-  PlusCircle, 
-  MessageSquare, 
-  Search, 
-  LogOut, 
-  Settings,
-  UserCircle,
-  Globe,
-  Users,
-  Calendar,
-  RefreshCcw
+import {
+    PlusCircle,
+    MessageSquare,
+    Search,
+    LogOut,
+    Settings,
+    UserCircle,
+    Globe,
+    Users,
+    Calendar,
+    RefreshCcw
 } from 'lucide-react';
 import {
     Dialog,
@@ -39,12 +39,12 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface ChatUser {
@@ -119,12 +119,12 @@ export default function DashboardPage() {
                     // Handle the user data structure correctly
                     if (participant.user) {
                         const lastMessage = conversation.last_message?.[0];
-                        
+
                         // The user field might be an array or a single object
-                        const userDataArray = Array.isArray(participant.user) 
-                            ? participant.user 
+                        const userDataArray = Array.isArray(participant.user)
+                            ? participant.user
                             : [participant.user];
-                        
+
                         userDataArray.forEach(userData => {
                             processedUsers.push({
                                 id: userData.id,
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                         </div>
                         <ThemeToggle />
                     </div>
-                    
+
                     {user && (
                         <div className="p-4 border-b">
                             <DropdownMenu>
@@ -315,8 +315,8 @@ export default function DashboardPage() {
                                         Settings
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
-                                        className="cursor-pointer text-red-500 focus:text-red-500" 
+                                    <DropdownMenuItem
+                                        className="cursor-pointer text-red-500 focus:text-red-500"
                                         onClick={handleSignOut}
                                     >
                                         <LogOut className="mr-2 h-4 w-4" />
@@ -326,17 +326,8 @@ export default function DashboardPage() {
                             </DropdownMenu>
                         </div>
                     )}
-                    
+
                     <div className="p-4">
-                        <Button 
-                            variant="outline" 
-                            className="w-full mb-4 justify-start gap-2"
-                            onClick={() => router.push('/chat')}
-                        >
-                            <Globe className="h-4 w-4" />
-                            Global Chat
-                        </Button>
-                        
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Quick Stats</h3>
                         <div className="grid grid-cols-2 gap-2 mb-6">
                             <Card className="p-3">
@@ -354,7 +345,7 @@ export default function DashboardPage() {
                                 </div>
                             </Card>
                         </div>
-                        
+
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Navigation</h3>
                         <div className="space-y-1">
                             <Button variant="ghost" className="w-full justify-start gap-2">
@@ -368,26 +359,26 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </aside>
-                
+
                 {/* Main content */}
                 <main className="flex-1 flex flex-col h-screen overflow-hidden">
                     <header className="border-b p-4 flex justify-between items-center bg-card/50 backdrop-blur-sm sticky top-0 z-10">
                         <h1 className="text-xl font-bold">Your Conversations</h1>
-                        
+
                         <div className="flex items-center gap-2">
                             <div className="relative w-64">
                                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                    placeholder="Search conversations..." 
+                                <Input
+                                    placeholder="Search conversations..."
                                     className="pl-9"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            
-                            <Button 
-                                variant="outline" 
-                                size="icon" 
+
+                            <Button
+                                variant="outline"
+                                size="icon"
                                 onClick={async () => {
                                     try {
                                         setHasFetchedHistory(false);
@@ -404,7 +395,7 @@ export default function DashboardPage() {
                             >
                                 <RefreshCcw className="h-4 w-4" />
                             </Button>
-                            
+
                             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button>
@@ -454,13 +445,13 @@ export default function DashboardPage() {
                                 </div>
                                 <h3 className="text-xl font-medium mb-2">No conversations yet</h3>
                                 <p className="text-muted-foreground max-w-sm">
-                                    {searchQuery 
+                                    {searchQuery
                                         ? 'No conversations match your search. Try a different term.'
                                         : 'Start chatting by clicking the "New Chat" button above.'}
                                 </p>
                                 {searchQuery && (
-                                    <Button 
-                                        variant="link" 
+                                    <Button
+                                        variant="link"
                                         onClick={() => setSearchQuery('')}
                                         className="mt-2"
                                     >
@@ -468,7 +459,7 @@ export default function DashboardPage() {
                                     </Button>
                                 )}
                                 {!searchQuery && (
-                                    <Button 
+                                    <Button
                                         onClick={() => setIsDialogOpen(true)}
                                         className="mt-4"
                                     >
@@ -478,7 +469,7 @@ export default function DashboardPage() {
                                 )}
                             </div>
                         )}
-                        
+
                         {filteredChatUsers.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredChatUsers.map((chatUser) => (
@@ -507,7 +498,7 @@ export default function DashboardPage() {
                                                 </div>
                                                 {chatUser.last_message_time && (
                                                     <Badge variant="secondary" className="text-xs">
-                                                        {formatDistanceToNow(new Date(chatUser.last_message_time), { 
+                                                        {formatDistanceToNow(new Date(chatUser.last_message_time), {
                                                             addSuffix: true,
                                                             includeSeconds: true
                                                         })}
