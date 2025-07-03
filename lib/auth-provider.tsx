@@ -1,12 +1,13 @@
 'use client';
 
-import { 
-  createContext, 
-  useContext, 
-  useEffect, 
-  useState 
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef
 } from 'react';
-import { 
+import {
   User,
   Session,
   SupabaseClient
@@ -27,16 +28,20 @@ type SupabaseContext = {
 
 const SupabaseContext = createContext<SupabaseContext | undefined>(undefined);
 
-export function SupabaseProvider({ 
-  children 
-}: { 
-  children: React.ReactNode 
+export function SupabaseProvider({
+  children
+}: {
+  children: React.ReactNode
 }) {
   const [supabase] = useState(() => createBrowserClient());
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  // Use a ref to track initial load vs. actual sign-in events
+  const isInitialLoad = useRef(true);
+  const previousAuthEvent = useRef<string | null>(null);
 
   const refreshSession = async () => {
     try {
@@ -62,10 +67,10 @@ export function SupabaseProvider({
           setIsLoading(false);
           return;
         }
-        
+
         // First, check if we have a session in storage
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error);
           setIsLoading(false);
@@ -92,20 +97,34 @@ export function SupabaseProvider({
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setIsLoading(false);
-        
+
         console.log('Auth state change:', event, newSession?.user?.email);
-        
+
+        // Only show welcome toast on explicit SIGNED_IN events, not on initial load
+        const isActualSignIn = event === 'SIGNED_IN' && !isInitialLoad.current && previousAuthEvent.current !== 'SIGNED_IN';
+
         if (event === 'SIGNED_IN' && !newSession?.user?.user_metadata?.has_completed_profile) {
           router.push('/profile-setup');
+          // Only show welcome toast on explicit sign in, not on page reload
+          if (isActualSignIn) {
+            toast.success(`Welcome, please complete your profile`);
+          }
         } else if (event === 'SIGNED_IN') {
           router.push('/dashboard');
-          toast.success(`Welcome back, ${newSession?.user?.user_metadata?.display_name || newSession?.user?.email}`);
         } else if (event === 'SIGNED_OUT') {
           router.push('/login');
         } else if (event === 'TOKEN_REFRESHED') {
           // Session was refreshed, no need to redirect
           console.log('Session refreshed automatically');
         }
+
+        // After initial load is complete, update the ref
+        if (isInitialLoad.current) {
+          isInitialLoad.current = false;
+        }
+
+        // Store the current event for next comparison
+        previousAuthEvent.current = event;
       }
     );
 
@@ -114,7 +133,7 @@ export function SupabaseProvider({
       if (session && session.expires_at) {
         const expiresAt = new Date(session.expires_at * 1000);
         const now = new Date();
-        
+
         // If token expires in less than 5 minutes, refresh it
         if ((expiresAt.getTime() - now.getTime()) < 5 * 60 * 1000) {
           refreshSession();
