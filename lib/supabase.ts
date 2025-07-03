@@ -16,6 +16,39 @@ export const createServerClient = () => {
 export const createBrowserClient = () => {
   return createClient(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      auth: {
+        persistSession: true,
+        storageKey: 'onechat-auth-token',
+        storage: {
+          getItem: (key) => {
+            if (typeof window !== 'undefined') {
+              return localStorage.getItem(key);
+            }
+            return null;
+          },
+          setItem: (key, value) => {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(key, value);
+            }
+          },
+          removeItem: (key) => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(key);
+            }
+          },
+        },
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        cookieOptions: {
+          name: 'onechat-session',
+          lifetime: 60 * 60 * 24 * 7, // 7 days
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        }
+      }
+    }
   );
 }; 

@@ -1,32 +1,29 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useAuthRedirect } from '@/lib/use-auth-redirect';
 
 export default function HomePage() {
-  const { user, isLoading } = useSupabase();
+  const { isAutoLoggingIn } = useAuthRedirect();
   const router = useRouter();
   
-  useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        if (!user.user_metadata?.has_completed_profile) {
-          router.push('/profile-setup');
-        } else {
-          router.push('/dashboard');
-        }
-      }
-    }
-  }, [user, isLoading, router]);
-  
-  if (isLoading) {
+  if (isAutoLoggingIn) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="mb-6 text-center animate-pulse">
+          <div className="flex items-center justify-center mb-2">
+            <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">One</span>
+            <span className="text-4xl font-bold">Chat</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-center">
+          <div className="h-2 w-24 bg-blue-600 dark:bg-blue-400 rounded-full mb-3 animate-pulse"></div>
+          <p className="text-sm text-muted-foreground">Checking login status...</p>
+        </div>
       </div>
     );
   }

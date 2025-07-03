@@ -8,7 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from 'sonner';
-import { PlusCircle, MessageSquare } from 'lucide-react';
+import { 
+  PlusCircle, 
+  MessageSquare, 
+  Search, 
+  LogOut, 
+  Settings,
+  UserCircle,
+  Globe,
+  Users,
+  Calendar
+} from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -20,8 +30,21 @@ import {
 import {
     Card,
     CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChatUser {
     id: string;
@@ -47,6 +70,7 @@ export default function DashboardPage() {
     const [newUserEmail, setNewUserEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -213,139 +237,286 @@ export default function DashboardPage() {
         return '?';
     };
 
+    const handleSignOut = async () => {
+        try {
+            await supabase.auth.signOut();
+            toast.success('Signed out successfully');
+            router.push('/login');
+        } catch (error) {
+            toast.error('Failed to sign out');
+        }
+    };
+
+    const filteredChatUsers = chatUsers.filter((chatUser) => {
+        const name = chatUser.display_name || chatUser.email;
+        return name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <p>Loading...</p>
+                <div className="animate-pulse flex flex-col items-center">
+                    <div className="h-16 w-16 bg-muted rounded-full mb-4"></div>
+                    <div className="h-4 w-32 bg-muted rounded mb-3"></div>
+                    <div className="h-3 w-24 bg-muted rounded"></div>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="border-b p-4 flex justify-between items-center">
-                <h1 className="text-xl font-bold">OneChat Dashboard</h1>
-
-                <div className="flex items-center gap-4">
-                    <ThemeToggle />
-
-                    {user && (
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                                    <AvatarFallback>
-                                        {getInitials(
-                                            user.user_metadata?.display_name,
-                                            user.email
-                                        )}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-1 ring-white" />
-                            </div>
-                            <span>{user.user_metadata?.display_name || user.email}</span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.push('/chat')}
-                            >
-                                Global Chat
-                            </Button>
+            {/* Sidebar */}
+            <div className="flex flex-col md:flex-row h-screen">
+                <aside className="w-full md:w-64 border-r bg-card md:h-screen">
+                    <div className="p-4 border-b flex items-center justify-between">
+                        <div className="flex items-center">
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">One</span>
+                            <span className="text-xl font-bold">Chat</span>
                         </div>
-                    )}
-                </div>
-            </header>
-
-            <main className="container mx-auto py-8 px-4">
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold">Your Conversations</h2>
-
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                New Chat
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Start a new conversation</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={startNewChat} className="space-y-4 mt-4">
-                                <div className="space-y-2">
-                                    <label htmlFor="email" className="text-sm font-medium">
-                                        Enter user email
-                                    </label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="user@example.com"
-                                        value={newUserEmail}
-                                        onChange={(e) => setNewUserEmail(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <DialogClose asChild>
-                                        <Button type="button" variant="outline">
-                                            Cancel
-                                        </Button>
-                                    </DialogClose>
-                                    <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting ? 'Starting...' : 'Start Chat'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                {chatUsers.length === 0 ? (
-                    <div className="text-center py-12">
-                        <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-medium">No conversations yet</h3>
-                        <p className="text-muted-foreground mt-2">
-                            Start a new conversation by clicking the "New Chat" button.
-                        </p>
+                        <ThemeToggle />
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {chatUsers.map((chatUser) => (
-                            <Card
-                                key={chatUser.id}
-                                className="cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => goToChat(chatUser.conversation_id!)}
-                            >
-                                <CardContent className="p-6">
-                                    <div className="flex items-center gap-4">
-                                        <Avatar className="h-12 w-12">
-                                            <AvatarImage src={chatUser.avatar_url} />
+                    
+                    {user && (
+                        <div className="p-4 border-b">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="w-full flex items-center justify-start gap-2 hover:bg-accent">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={user.user_metadata?.avatar_url} />
                                             <AvatarFallback>
-                                                {getInitials(chatUser.display_name, chatUser.email)}
+                                                {getInitials(
+                                                    user.user_metadata?.display_name,
+                                                    user.email
+                                                )}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium truncate">
-                                                {chatUser.display_name || chatUser.email}
-                                            </h3>
-                                            {chatUser.last_message && (
-                                                <p className="text-muted-foreground text-sm truncate">
+                                        <div className="flex flex-col items-start overflow-hidden">
+                                            <span className="font-medium truncate w-full">
+                                                {user.user_metadata?.display_name || user.email}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground truncate w-full">
+                                                {user.email}
+                                            </span>
+                                        </div>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <UserCircle className="mr-2 h-4 w-4" />
+                                        Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        Settings
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                        className="cursor-pointer text-red-500 focus:text-red-500" 
+                                        onClick={handleSignOut}
+                                    >
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Sign out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    )}
+                    
+                    <div className="p-4">
+                        <Button 
+                            variant="outline" 
+                            className="w-full mb-4 justify-start gap-2"
+                            onClick={() => router.push('/chat')}
+                        >
+                            <Globe className="h-4 w-4" />
+                            Global Chat
+                        </Button>
+                        
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Quick Stats</h3>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            <Card className="p-3">
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-bold">{chatUsers.length}</span>
+                                    <span className="text-xs text-muted-foreground">Contacts</span>
+                                </div>
+                            </Card>
+                            <Card className="p-3">
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-bold">
+                                        {chatUsers.filter(u => u.last_message_time).length}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">Active Chats</span>
+                                </div>
+                            </Card>
+                        </div>
+                        
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Navigation</h3>
+                        <div className="space-y-1">
+                            <Button variant="ghost" className="w-full justify-start gap-2">
+                                <Users className="h-4 w-4" />
+                                Contacts
+                            </Button>
+                            <Button variant="ghost" className="w-full justify-start gap-2">
+                                <Calendar className="h-4 w-4" />
+                                Schedule
+                            </Button>
+                        </div>
+                    </div>
+                </aside>
+                
+                {/* Main content */}
+                <main className="flex-1 flex flex-col h-screen overflow-hidden">
+                    <header className="border-b p-4 flex justify-between items-center bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+                        <h1 className="text-xl font-bold">Your Conversations</h1>
+                        
+                        <div className="flex items-center gap-2">
+                            <div className="relative w-64">
+                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search conversations..." 
+                                    className="pl-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        New Chat
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Start a new conversation</DialogTitle>
+                                    </DialogHeader>
+                                    <form onSubmit={startNewChat} className="space-y-4 mt-4">
+                                        <div className="space-y-2">
+                                            <label htmlFor="email" className="text-sm font-medium">
+                                                Enter user email
+                                            </label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                placeholder="user@example.com"
+                                                value={newUserEmail}
+                                                onChange={(e) => setNewUserEmail(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <DialogClose asChild>
+                                                <Button type="button" variant="outline">
+                                                    Cancel
+                                                </Button>
+                                            </DialogClose>
+                                            <Button type="submit" disabled={isSubmitting}>
+                                                {isSubmitting ? 'Starting...' : 'Start Chat'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </header>
+
+                    <div className="flex-1 p-6 overflow-y-auto">
+                        {filteredChatUsers.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full text-center">
+                                <div className="bg-primary/10 rounded-full p-6 mb-4">
+                                    <MessageSquare className="h-12 w-12 text-primary" />
+                                </div>
+                                <h3 className="text-xl font-medium mb-2">No conversations yet</h3>
+                                <p className="text-muted-foreground max-w-sm">
+                                    {searchQuery 
+                                        ? 'No conversations match your search. Try a different term.'
+                                        : 'Start chatting by clicking the "New Chat" button above.'}
+                                </p>
+                                {searchQuery && (
+                                    <Button 
+                                        variant="link" 
+                                        onClick={() => setSearchQuery('')}
+                                        className="mt-2"
+                                    >
+                                        Clear search
+                                    </Button>
+                                )}
+                                {!searchQuery && (
+                                    <Button 
+                                        onClick={() => setIsDialogOpen(true)}
+                                        className="mt-4"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Start New Chat
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                        
+                        {filteredChatUsers.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredChatUsers.map((chatUser) => (
+                                    <Card
+                                        key={chatUser.id}
+                                        className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
+                                        onClick={() => goToChat(chatUser.conversation_id!)}
+                                    >
+                                        <CardHeader className="p-4 pb-0">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-10 w-10 border-2 border-background">
+                                                        <AvatarImage src={chatUser.avatar_url} />
+                                                        <AvatarFallback className="bg-primary/10 text-primary">
+                                                            {getInitials(chatUser.display_name, chatUser.email)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <h3 className="font-medium line-clamp-1">
+                                                            {chatUser.display_name || chatUser.email}
+                                                        </h3>
+                                                        <p className="text-xs text-muted-foreground line-clamp-1">
+                                                            {chatUser.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {chatUser.last_message_time && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {formatDistanceToNow(new Date(chatUser.last_message_time), { 
+                                                            addSuffix: true,
+                                                            includeSeconds: true
+                                                        })}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-4">
+                                            {chatUser.last_message ? (
+                                                <p className="text-sm text-muted-foreground line-clamp-2">
                                                     {chatUser.last_message}
                                                 </p>
-                                            )}
-                                            {chatUser.last_message_time && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatDistanceToNow(new Date(chatUser.last_message_time), { addSuffix: true })}
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground italic">
+                                                    No messages yet. Start a conversation!
                                                 </p>
                                             )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                        </CardContent>
+                                        <CardFooter className="p-3 bg-muted/30 border-t flex justify-between">
+                                            <span className="text-xs text-muted-foreground">
+                                                Click to continue conversation
+                                            </span>
+                                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                )}
-            </main>
+                </main>
+            </div>
         </div>
     );
 } 
