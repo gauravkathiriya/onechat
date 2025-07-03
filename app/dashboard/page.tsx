@@ -17,7 +17,8 @@ import {
   UserCircle,
   Globe,
   Users,
-  Calendar
+  Calendar,
+  RefreshCcw
 } from 'lucide-react';
 import {
     Dialog,
@@ -71,14 +72,17 @@ export default function DashboardPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !user) {
             router.push('/login');
-        } else if (user) {
+        } else if (user && !hasFetchedHistory) {
+            // Fetch chat history only once when component mounts and user is available
             fetchChatHistory();
+            setHasFetchedHistory(true);
         }
-    }, [user, isLoading, router]);
+    }, [isLoading, user, router, hasFetchedHistory]); // Added hasFetchedHistory to dependencies
 
     const fetchChatHistory = async () => {
         if (!user) return;
@@ -102,8 +106,6 @@ export default function DashboardPage() {
                 .order('updated_at', { ascending: false });
 
             if (error) throw error;
-            console.log("Conversations data:", JSON.stringify(conversations, null, 2));
-
             // Process the conversations to extract other participants
             const processedUsers: ChatUser[] = [];
 
@@ -382,6 +384,26 @@ export default function DashboardPage() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
+                            
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={async () => {
+                                    try {
+                                        setHasFetchedHistory(false);
+                                        await fetchChatHistory();
+                                        toast.success('Conversations refreshed');
+                                    } catch (error) {
+                                        console.error('Error refreshing conversations:', error);
+                                        toast.error('Failed to refresh conversations');
+                                    } finally {
+                                        setHasFetchedHistory(true);
+                                    }
+                                }}
+                                title="Refresh conversations"
+                            >
+                                <RefreshCcw className="h-4 w-4" />
+                            </Button>
                             
                             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                 <DialogTrigger asChild>
