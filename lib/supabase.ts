@@ -41,13 +41,7 @@ export const createBrowserClient = () => {
         },
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'pkce',
-        cookieOptions: {
-          name: 'onechat-session',
-          lifetime: 60 * 60 * 24 * 7, // 7 days
-          sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production',
-        }
+        flowType: 'pkce'
       }
     }
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,7 +36,8 @@ type LoginFormValues = {
   rememberMe: boolean;
 };
 
-export default function LoginPage() {
+// Separate component that uses useSearchParams
+function LoginPageContent() {
   const { supabase } = useSupabase();
   const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
@@ -248,16 +249,29 @@ export default function LoginPage() {
       </Card>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        By using OneChat, you agree to our{" "}
-        <a href="/terms" className="underline underline-offset-4 hover:text-primary text-blue-600 dark:text-blue-400">
+        By signing in, you agree to our{" "}
+        <a href="/terms" className="underline underline-offset-4 hover:text-primary">
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="/privacy" className="underline underline-offset-4 hover:text-primary text-blue-600 dark:text-blue-400">
+        <a href="/privacy" className="underline underline-offset-4 hover:text-primary">
           Privacy Policy
         </a>
         .
       </p>
     </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg">Loading...</p>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 } 
