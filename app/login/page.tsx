@@ -145,11 +145,11 @@ export default function LoginPage() {
 
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="w-full" type="button" onClick={handleGithubSignIn}>
+            <Button variant="outline" className="w-full border-blue-200 hover:bg-blue-50 dark:hover:bg-gray-800" type="button" onClick={handleGithubSignIn}>
               <Github className="mr-2 h-4 w-4" />
               GitHub
             </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+            <Button variant="outline" className="w-full border-blue-200 hover:bg-blue-50 dark:hover:bg-gray-800" type="button" onClick={handleGoogleSignIn}>
               <Mail className="mr-2 h-4 w-4" />
               Google
             </Button>
@@ -178,7 +178,7 @@ export default function LoginPage() {
                     id="email"
                     type="email"
                     placeholder="you@example.com"
-                    className="pl-10"
+                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
                     {...register('email')}
                   />
                 </div>
@@ -197,7 +197,7 @@ export default function LoginPage() {
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10"
+                    className="pl-10 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
                     {...register('password')}
                   />
                 </div>
@@ -214,13 +214,13 @@ export default function LoginPage() {
                       Remember me
                     </Label>
                   </div>
-                  <Button variant="link" className="p-0 h-auto text-sm" type="button">
+                  <Button variant="link" className="p-0 h-auto text-sm text-blue-600 dark:text-blue-400" type="button">
                     Forgot password?
                   </Button>
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
                 {isSubmitting
                   ? 'Processing...'
                   : isLogin
@@ -238,7 +238,7 @@ export default function LoginPage() {
               : "Already have an account? "}
             <Button
               variant="link"
-              className="p-0 h-auto"
+              className="p-0 h-auto text-blue-600 dark:text-blue-400"
               onClick={() => setIsLogin(!isLogin)}
             >
               {isLogin ? "Sign Up" : "Sign In"}
@@ -248,7 +248,15 @@ export default function LoginPage() {
       </Card>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        By continuing, you agree to our Terms of Service and Privacy Policy.
+        By using OneChat, you agree to our{" "}
+        <a href="/terms" className="underline underline-offset-4 hover:text-primary text-blue-600 dark:text-blue-400">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="/privacy" className="underline underline-offset-4 hover:text-primary text-blue-600 dark:text-blue-400">
+          Privacy Policy
+        </a>
+        .
       </p>
     </div>
   );

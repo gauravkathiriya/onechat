@@ -184,7 +184,7 @@ export default function ProfileSetupPage() {
                 id="displayName"
                 placeholder="How would you like to be called?"
                 {...register('displayName')}
-                className="h-11"
+                className="h-11 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
               />
               {errors.displayName && (
                 <p className="text-sm text-red-500">{errors.displayName.message}</p>
@@ -198,7 +198,7 @@ export default function ProfileSetupPage() {
           <CardFooter className="flex flex-col gap-2">
             <Button 
               type="submit" 
-              className="w-full h-11" 
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700" 
               disabled={isSubmitting || isUploading}
               size="lg"
             >

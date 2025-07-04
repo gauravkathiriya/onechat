@@ -4,26 +4,27 @@ import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   return (
-    <header className="bg-black text-white py-4">
+    <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold">
-          OneChat
+          <span className="text-white">One</span>
+          <span className="text-blue-200">Chat</span>
         </Link>
         
         <nav className="hidden md:flex space-x-6">
-          <Link href="/" className="hover:text-gray-300 transition-colors">
+          <Link href="/" className="text-blue-100 hover:text-white transition-colors">
             Home
           </Link>
-          <Link href="/about" className="hover:text-gray-300 transition-colors">
+          <Link href="/about" className="text-blue-100 hover:text-white transition-colors">
             About
           </Link>
-          <Link href="/contact" className="hover:text-gray-300 transition-colors">
+          <Link href="/contact" className="text-blue-100 hover:text-white transition-colors">
             Contact
           </Link>
-          <Link href="/privacy" className="hover:text-gray-300 transition-colors">
+          <Link href="/privacy" className="text-blue-100 hover:text-white transition-colors">
             Privacy
           </Link>
-          <Link href="/terms" className="hover:text-gray-300 transition-colors">
+          <Link href="/terms" className="text-blue-100 hover:text-white transition-colors">
             Terms
           </Link>
         </nav>
@@ -31,12 +32,12 @@ export function Header() {
         <div className="flex items-center space-x-4">
           <ThemeToggle />
           <Link href="/login">
-            <Button variant="outline" size="sm" className="border-white text-white hover:bg-white hover:text-black">
+            <Button variant="outline" size="sm" className="border-blue-200 text-white hover:bg-blue-500">
               Login
             </Button>
           </Link>
           <Link href="/login?signup=true">
-            <Button size="sm">Sign Up</Button>
+            <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-100">Sign Up</Button>
           </Link>
         </div>
       </div>
