@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  swcMinify: true,
+  images: {
+    domains: ['qvnkmfrzkxbrgbfxzchk.supabase.co'], // Replace with your Supabase URL
+  },
 };
 
 export default nextConfig;

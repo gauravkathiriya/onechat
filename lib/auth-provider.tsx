@@ -98,9 +98,6 @@ export function SupabaseProvider({
         setUser(newSession?.user ?? null);
         setIsLoading(false);
 
-        console.log('Auth state change:', event, newSession?.user?.email);
-
-        // Only show welcome toast on explicit SIGNED_IN events, not on initial load
         const isActualSignIn = event === 'SIGNED_IN' && !isInitialLoad.current && previousAuthEvent.current !== 'SIGNED_IN';
 
         if (event === 'SIGNED_IN' && !newSession?.user?.user_metadata?.has_completed_profile) {

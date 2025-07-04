@@ -70,14 +70,39 @@ export default function ProfilePage() {
     
     try {
       const fileExt = avatarFile.name.split('.').pop();
-      const filePath = `avatars/${user.id}.${fileExt}`;
+      const fileName = `${user.id}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
       
+      // Delete any existing avatar with the same name pattern first
+      try {
+        const { data: existingFiles } = await supabase
+          .storage
+          .from('user-avatars')
+          .list('avatars', {
+            search: user.id
+          });
+          
+        if (existingFiles && existingFiles.length > 0) {
+          await supabase
+            .storage
+            .from('user-avatars')
+            .remove(existingFiles.map(file => `avatars/${file.name}`));
+        }
+      } catch (error) {
+        console.log('No existing avatar or error listing files', error);
+      }
+      
+      // Upload the new avatar
       const { error } = await supabase.storage
         .from('user-avatars')
-        .upload(filePath, avatarFile, { upsert: true });
+        .upload(filePath, avatarFile, {
+          upsert: true,
+          contentType: avatarFile.type
+        });
         
       if (error) {
-        toast.error('Error uploading avatar');
+        console.error('Upload error:', error);
+        toast.error('Error uploading avatar: ' + error.message);
         return null;
       }
       

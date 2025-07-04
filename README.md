@@ -1,92 +1,75 @@
-# OneChat - Real-time Chat Application
+# OneChat
 
-A modern real-time chat application built with Next.js and Supabase.
+A modern real-time chat application built with Next.js, Supabase, and Tailwind CSS.
 
 ## Features
 
-- 🔐 **User Authentication**
+- Real-time messaging
+- User authentication
+- User profiles with avatars
+- Theme customization (light/dark mode)
+- Responsive design
 
-  - Login/Signup via Supabase Auth
-  - Secure session management
-  - Profile setup with display name and avatar
-
-- 💬 **Real-time Messaging**
-
-  - Messages delivered instantly with Supabase Realtime
-  - Auto-scroll to latest messages
-
-- 👤 **User Profiles**
-
-  - Custom display names
-  - Profile pictures (uploaded to Supabase Storage)
-  - User avatars shown with messages
-
-- 😀 **Emoji Support**
-  - Add emojis to messages with an emoji picker
-
-## Technology Stack
-
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
-- **Backend**: Supabase (Auth, Database, Storage, Realtime)
-- **Styling**: shadcn/ui components
-
-## Setup
+## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or newer)
-- Supabase account and project
-
-### Supabase Setup
-
-1. Create a new Supabase project
-2. Run the SQL commands in `supabase-setup.sql` in the Supabase SQL editor
-3. Enable Email Auth in Authentication settings
-4. Create a storage bucket named `user-avatars` with public access
-
-### Environment Variables
-
-Create a `.env.local` file in the root directory with the following variables:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
+- Node.js 18+ and npm
+- Supabase account
 
 ### Installation
 
-```bash
-# Install dependencies
-npm install
+1. Clone the repository
 
-# Start development server
+```bash
+git clone https://github.com/yourusername/onechat.git
+cd onechat
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Set up environment variables
+
+Copy the `env.example` file to `.env.local` and add your Supabase credentials:
+
+```bash
+cp env.example .env.local
+```
+
+Edit `.env.local` with your Supabase URL and anon key.
+
+4. Run the development server
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the application.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Application Flow
+## Supabase Setup
 
-1. Users sign up or log in
-2. First-time users complete their profile setup
-3. After authentication, users are redirected to the chat page
-4. Messages are delivered in real-time to all connected users
+Follow the instructions in the `supabase` folder to set up your Supabase project:
+
+- `supabase-setup.sql`: SQL for creating tables and functions
+- `supabase-setup-instructions.md`: Step-by-step guide
+- `supabase-storage-policies.sql`: Storage bucket setup for avatars
+- `storage-setup-instructions.md`: Storage setup guide
+
+## Deploying to Vercel
+
+See the detailed deployment guide in [deployment-guide.md](deployment-guide.md) for step-by-step instructions on deploying to Vercel.
+
+## Built With
+
+- [Next.js](https://nextjs.org/) - React framework
+- [Supabase](https://supabase.com/) - Backend as a Service
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [Shadcn UI](https://ui.shadcn.com/) - UI component library
 
 ## License
 
-MIT
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
