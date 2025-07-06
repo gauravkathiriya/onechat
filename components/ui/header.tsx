@@ -10,7 +10,7 @@ export function Header() {
           <span className="text-white">One</span>
           <span className="text-blue-200">Chat</span>
         </Link>
-        
+
         <nav className="hidden md:flex space-x-6">
           <Link href="/" className="text-blue-100 hover:text-white transition-colors">
             Home
@@ -28,16 +28,16 @@ export function Header() {
             Terms
           </Link>
         </nav>
-        
+
         <div className="flex items-center space-x-4">
           <ThemeToggle />
           <Link href="/login">
-            <Button variant="outline" size="sm" className="border-blue-200 text-white hover:bg-blue-500">
+            <Button variant="ghost" size="sm" className="hover:cursor-pointer">
               Login
             </Button>
           </Link>
           <Link href="/login?signup=true">
-            <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-100">Sign Up</Button>
+            <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-100 hover:cursor-pointer">Sign Up</Button>
           </Link>
         </div>
       </div>

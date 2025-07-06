@@ -33,7 +33,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-grow bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-16 flex flex-col items-center">
           <div className="text-center mb-12">
@@ -48,7 +48,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 onClick={() => router.push('/login')}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 hover:cursor-pointer"
               >
                 Get Started
               </Button>
@@ -57,7 +57,7 @@ export default function HomePage() {
                 size="lg"
                 variant="outline"
                 onClick={() => router.push('/login?signup=true')}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-gray-800"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-gray-800 hover:cursor-pointer"
               >
                 Create Account
               </Button>
@@ -78,7 +78,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
