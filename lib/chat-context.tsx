@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useSupabase } from './auth-provider';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import { useSupabase } from "./auth-provider";
 
 interface ChatRequest {
   id: string;
   requester_id: string;
   recipient_id: string;
   message?: string;
-  status: 'pending' | 'accepted' | 'ignored';
+  status: "pending" | "accepted" | "ignored";
   created_at: string;
   responded_at?: string;
   requester: {
@@ -34,31 +41,37 @@ interface ChatContextType {
   pendingRequests: ChatRequest[];
   isLoadingRequests: boolean;
   removeRequest: (requestId: string) => void;
-  
+
   // Chat Users (for dashboard)
   chatUsers: ChatUser[];
   isLoadingUsers: boolean;
   fetchChatHistory: () => Promise<void>;
-  
+
   // Actions
-  startNewChat: (email: string) => Promise<{ success: boolean; message: string; conversationId?: string }>;
-  acceptChatRequest: (requestId: string) => Promise<{ success: boolean; message: string; conversationId?: string }>;
-  ignoreChatRequest: (requestId: string) => Promise<{ success: boolean; message: string }>;
+  startNewChat: (
+    email: string
+  ) => Promise<{ success: boolean; message: string; conversationId?: string }>;
+  acceptChatRequest: (
+    requestId: string
+  ) => Promise<{ success: boolean; message: string; conversationId?: string }>;
+  ignoreChatRequest: (
+    requestId: string
+  ) => Promise<{ success: boolean; message: string }>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { supabase, user } = useSupabase();
-  
+
   // Chat Requests State
   const [pendingRequests, setPendingRequests] = useState<ChatRequest[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(true);
-  
+
   // Chat Users State
   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  
+
   // Refs to prevent infinite loops
   const hasInitializedRequests = useRef(false);
   const hasInitializedUsers = useRef(false);
@@ -70,7 +83,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from("chat_requests")
-        .select(`
+        .select(
+          `
           id,
           requester_id,
           recipient_id,
@@ -84,7 +98,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             avatar_url,
             email
           )
-        `)
+        `
+        )
         .eq("recipient_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
@@ -94,7 +109,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           error.code === "PGRST116" ||
           error.message?.includes('relation "chat_requests" does not exist')
         ) {
-          console.log("Chat requests table not found. Please run the database setup first.");
+          console.log(
+            "Chat requests table not found. Please run the database setup first."
+          );
           setPendingRequests([]);
         } else {
           throw error;
@@ -108,7 +125,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoadingRequests(false);
     }
-  }, [supabase, user]);
+  }, []);
 
   // Fetch chat history (conversations)
   const fetchChatHistory = useCallback(async () => {
@@ -117,8 +134,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setIsLoadingUsers(true);
     try {
       const { data: conversations, error } = await supabase
-        .from('conversations')
-        .select(`
+        .from("conversations")
+        .select(
+          `
           id,
           created_at,
           updated_at,
@@ -132,14 +150,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               avatar_url
             )
           )
-        `)
-        .contains('participant_ids', [user.id])
-        .order('updated_at', { ascending: false });
+        `
+        )
+        .contains("participant_ids", [user.id])
+        .order("updated_at", { ascending: false });
 
       if (error) throw error;
 
       const users: ChatUser[] = [];
-      conversations?.forEach(conversation => {
+      conversations?.forEach((conversation) => {
         const otherParticipants = conversation.conversation_participants
           .filter((p: any) => p.user_id !== user.id)
           .map((p: any) => ({
@@ -147,152 +166,180 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             email: p.user.email,
             display_name: p.user.display_name,
             avatar_url: p.user.avatar_url,
-            conversation_id: conversation.id
+            conversation_id: conversation.id,
           }));
         users.push(...otherParticipants);
       });
 
       setChatUsers(users);
     } catch (error) {
-      console.error('Error fetching chat history:', error);
+      console.error("Error fetching chat history:", error);
     } finally {
       setIsLoadingUsers(false);
     }
   }, [supabase, user]);
 
   // Start new chat (create chat request)
-  const startNewChat = useCallback(async (email: string) => {
-    if (!user || !supabase) {
-      return { success: false, message: 'User not authenticated' };
-    }
-
-    try {
-      // Check if the user exists
-      const { data: targetUser, error: userError } = await supabase
-        .from('profiles')
-        .select('id, email, display_name, avatar_url')
-        .eq('email', email.toLowerCase())
-        .single();
-
-      if (userError || !targetUser) {
-        return { success: false, message: 'User not found with that email' };
+  const startNewChat = useCallback(
+    async (email: string) => {
+      if (!user || !supabase) {
+        return { success: false, message: "User not authenticated" };
       }
 
-      // Check if user is trying to chat with themselves
-      if (targetUser.id === user.id) {
-        return { success: false, message: 'You cannot start a chat with yourself' };
-      }
+      try {
+        // Check if the user exists
+        const { data: targetUser, error: userError } = await supabase
+          .from("profiles")
+          .select("id, email, display_name, avatar_url")
+          .eq("email", email.toLowerCase())
+          .single();
 
-      // Check if a conversation already exists
-      const { data: existingConversation, error: convError } = await supabase
-        .from('conversations')
-        .select('id')
-        .contains('participant_ids', [user.id, targetUser.id])
-        .single();
-
-      // If conversation already exists, return the conversation ID
-      if (existingConversation) {
-        return { 
-          success: true, 
-          message: 'Conversation already exists', 
-          conversationId: existingConversation.id 
-        };
-      }
-
-      // Check if there's already a pending chat request
-      const { data: existingRequest, error: requestError } = await supabase
-        .from('chat_requests')
-        .select('id, status')
-        .eq('requester_id', user.id)
-        .eq('recipient_id', targetUser.id)
-        .eq('status', 'pending')
-        .single();
-
-      if (requestError && requestError.code !== 'PGRST116') {
-        throw requestError;
-      }
-
-      if (existingRequest) {
-        return { success: false, message: 'You already have a pending chat request with this user' };
-      }
-
-      // Create a chat request
-      const { data: chatRequest, error: createError } = await supabase
-        .from('chat_requests')
-        .insert({
-          requester_id: user.id,
-          recipient_id: targetUser.id,
-          message: `Hi! I'd like to start a conversation with you.`
-        })
-        .select('id')
-        .single();
-
-      if (createError) {
-        if (createError.code === 'PGRST116' || createError.message?.includes('relation "chat_requests" does not exist')) {
-          return { success: false, message: 'Chat requests feature is not set up yet. Please run the database setup first.' };
+        if (userError || !targetUser) {
+          return { success: false, message: "User not found with that email" };
         }
-        throw createError;
+
+        // Check if user is trying to chat with themselves
+        if (targetUser.id === user.id) {
+          return {
+            success: false,
+            message: "You cannot start a chat with yourself",
+          };
+        }
+
+        // Check if a conversation already exists
+        const { data: existingConversation, error: convError } = await supabase
+          .from("conversations")
+          .select("id")
+          .contains("participant_ids", [user.id, targetUser.id])
+          .single();
+
+        // If conversation already exists, return the conversation ID
+        if (existingConversation) {
+          return {
+            success: true,
+            message: "Conversation already exists",
+            conversationId: existingConversation.id,
+          };
+        }
+
+        // Check if there's already a pending chat request
+        const { data: existingRequest, error: requestError } = await supabase
+          .from("chat_requests")
+          .select("id, status")
+          .eq("requester_id", user.id)
+          .eq("recipient_id", targetUser.id)
+          .eq("status", "pending")
+          .single();
+
+        if (requestError && requestError.code !== "PGRST116") {
+          throw requestError;
+        }
+
+        if (existingRequest) {
+          return {
+            success: false,
+            message: "You already have a pending chat request with this user",
+          };
+        }
+
+        // Create a chat request
+        const { data: chatRequest, error: createError } = await supabase
+          .from("chat_requests")
+          .insert({
+            requester_id: user.id,
+            recipient_id: targetUser.id,
+            message: `Hi! I'd like to start a conversation with you.`,
+          })
+          .select("id")
+          .single();
+
+        if (createError) {
+          if (
+            createError.code === "PGRST116" ||
+            createError.message?.includes(
+              'relation "chat_requests" does not exist'
+            )
+          ) {
+            return {
+              success: false,
+              message:
+                "Chat requests feature is not set up yet. Please run the database setup first.",
+            };
+          }
+          throw createError;
+        }
+
+        return {
+          success: true,
+          message: `Chat request sent to ${
+            targetUser.display_name || targetUser.email
+          }! They will receive a notification to accept or ignore your request.`,
+        };
+      } catch (error: any) {
+        console.error("Error starting new chat:", error);
+        return { success: false, message: "Failed to send chat request" };
       }
-
-      return { 
-        success: true, 
-        message: `Chat request sent to ${targetUser.display_name || targetUser.email}! They will receive a notification to accept or ignore your request.` 
-      };
-
-    } catch (error: any) {
-      console.error('Error starting new chat:', error);
-      return { success: false, message: 'Failed to send chat request' };
-    }
-  }, [supabase, user]);
+    },
+    [supabase, user]
+  );
 
   // Accept chat request
-  const acceptChatRequest = useCallback(async (requestId: string) => {
-    if (!user || !supabase) {
-      return { success: false, message: 'User not authenticated' };
-    }
+  const acceptChatRequest = useCallback(
+    async (requestId: string) => {
+      if (!user || !supabase) {
+        return { success: false, message: "User not authenticated" };
+      }
 
-    try {
-      const { data: conversationId, error } = await supabase
-        .rpc('accept_chat_request', { request_id: requestId });
+      try {
+        const { data: conversationId, error } = await supabase.rpc(
+          "accept_chat_request",
+          { request_id: requestId }
+        );
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Refresh chat history to include the new conversation
-      await fetchChatHistory();
+        // Refresh chat history to include the new conversation
+        await fetchChatHistory();
 
-      return { 
-        success: true, 
-        message: 'Chat request accepted! Starting conversation...', 
-        conversationId 
-      };
-    } catch (error: any) {
-      console.error('Error accepting chat request:', error);
-      return { success: false, message: 'Failed to accept chat request' };
-    }
-  }, [supabase, user, fetchChatHistory]);
+        return {
+          success: true,
+          message: "Chat request accepted! Starting conversation...",
+          conversationId,
+        };
+      } catch (error: any) {
+        console.error("Error accepting chat request:", error);
+        return { success: false, message: "Failed to accept chat request" };
+      }
+    },
+    [supabase, user, fetchChatHistory]
+  );
 
   // Ignore chat request
-  const ignoreChatRequest = useCallback(async (requestId: string) => {
-    if (!user || !supabase) {
-      return { success: false, message: 'User not authenticated' };
-    }
+  const ignoreChatRequest = useCallback(
+    async (requestId: string) => {
+      if (!user || !supabase) {
+        return { success: false, message: "User not authenticated" };
+      }
 
-    try {
-      const { error } = await supabase
-        .rpc('ignore_chat_request', { request_id: requestId });
+      try {
+        const { error } = await supabase.rpc("ignore_chat_request", {
+          request_id: requestId,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      return { success: true, message: 'Chat request ignored' };
-    } catch (error: any) {
-      console.error('Error ignoring chat request:', error);
-      return { success: false, message: 'Failed to ignore chat request' };
-    }
-  }, [supabase, user]);
+        return { success: true, message: "Chat request ignored" };
+      } catch (error: any) {
+        console.error("Error ignoring chat request:", error);
+        return { success: false, message: "Failed to ignore chat request" };
+      }
+    },
+    [supabase, user]
+  );
 
   // Remove request from state (for UI updates)
   const removeRequest = useCallback((requestId: string) => {
-    setPendingRequests(prev => prev.filter(req => req.id !== requestId));
+    setPendingRequests((prev) => prev.filter((req) => req.id !== requestId));
   }, []);
 
   // Initialize chat requests subscription
@@ -322,7 +369,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           // Fetch the complete request with requester details
           supabase
             .from("chat_requests")
-            .select(`
+            .select(
+              `
               id,
               requester_id,
               recipient_id,
@@ -336,17 +384,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
                 avatar_url,
                 email
               )
-            `)
+            `
+            )
             .eq("id", payload.new.id)
             .single()
             .then(({ data, error }) => {
               if (error) {
-                console.error("Error fetching new chat request details:", error);
+                console.error(
+                  "Error fetching new chat request details:",
+                  error
+                );
                 return;
               }
               if (data) {
                 console.log("Adding new chat request to state:", data);
-                setPendingRequests(prev => [data as unknown as ChatRequest, ...prev]);
+                setPendingRequests((prev) => [
+                  data as unknown as ChatRequest,
+                  ...prev,
+                ]);
               }
             });
         }
@@ -362,7 +417,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         (payload) => {
           // Remove the request from pending list if it's no longer pending
           if (payload.new.status !== "pending") {
-            setPendingRequests(prev => prev.filter(req => req.id !== payload.new.id));
+            setPendingRequests((prev) =>
+              prev.filter((req) => req.id !== payload.new.id)
+            );
           }
         }
       )
@@ -372,7 +429,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       hasInitializedRequests.current = false;
       supabase.removeChannel(chatRequestsChannel);
     };
-  }, [user?.id, supabase, fetchChatRequests]);
+  }, [user?.id, supabase]);
 
   // Initialize chat history when user changes
   useEffect(() => {
@@ -400,17 +457,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     ignoreChatRequest,
   };
 
-  return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 export function useChat() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
+    throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
 }
