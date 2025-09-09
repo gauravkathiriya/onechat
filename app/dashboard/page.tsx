@@ -68,7 +68,7 @@ interface ProfileData {
 
 export default function DashboardPage() {
     const { supabase, user, isLoading } = useSupabase();
-    const { chatUsers, isLoadingUsers, fetchChatHistory, startNewChat } = useChat();
+    const { chatUsers, isLoadingUsers, refreshChatHistory, startNewChat } = useChat();
     const router = useRouter();
     const [newUserEmail, setNewUserEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -271,7 +271,7 @@ export default function DashboardPage() {
                                 size="icon"
                                 onClick={async () => {
                                     try {
-                                        await fetchChatHistory();
+                                        await refreshChatHistory();
                                         toast.success('Conversations refreshed');
                                     } catch (error) {
                                         console.error('Error refreshing conversations:', error);

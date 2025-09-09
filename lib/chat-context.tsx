@@ -45,7 +45,7 @@ interface ChatContextType {
   // Chat Users (for dashboard)
   chatUsers: ChatUser[];
   isLoadingUsers: boolean;
-  fetchChatHistory: () => Promise<void>;
+  refreshChatHistory: () => Promise<void>;
 
   // Actions
   startNewChat: (
@@ -76,59 +76,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const hasInitializedRequests = useRef(false);
   const hasInitializedUsers = useRef(false);
 
-  // Fetch chat requests
-  const fetchChatRequests = useCallback(async () => {
-    if (!user || !supabase) return;
 
-    try {
-      const { data, error } = await supabase
-        .from("chat_requests")
-        .select(
-          `
-          id,
-          requester_id,
-          recipient_id,
-          message,
-          status,
-          created_at,
-          responded_at,
-          requester:profiles!chat_requests_requester_id_fkey(
-            id,
-            display_name,
-            avatar_url,
-            email
-          )
-        `
-        )
-        .eq("recipient_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        if (
-          error.code === "PGRST116" ||
-          error.message?.includes('relation "chat_requests" does not exist')
-        ) {
-          console.log(
-            "Chat requests table not found. Please run the database setup first."
-          );
-          setPendingRequests([]);
-        } else {
-          throw error;
-        }
-      } else {
-        setPendingRequests((data as unknown as ChatRequest[]) || []);
-      }
-    } catch (error) {
-      console.error("Error fetching pending chat requests:", error);
-      setPendingRequests([]);
-    } finally {
-      setIsLoadingRequests(false);
-    }
-  }, []);
-
-  // Fetch chat history (conversations)
-  const fetchChatHistory = useCallback(async () => {
+  // Fetch chat history (conversations) - not using useCallback to avoid dependency issues
+  const fetchChatHistory = async () => {
+    console.log("fetchChatHistory called");
     if (!user || !supabase) return;
 
     setIsLoadingUsers(true);
@@ -177,7 +128,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [supabase, user]);
+  };
 
   // Start new chat (create chat request)
   const startNewChat = useCallback(
@@ -299,7 +250,49 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
 
         // Refresh chat history to include the new conversation
-        await fetchChatHistory();
+        // We'll call fetchChatHistory directly instead of using the callback
+        try {
+          const { data: conversations, error: historyError } = await supabase
+            .from("conversations")
+            .select(
+              `
+              id,
+              created_at,
+              updated_at,
+              participant_ids,
+              conversation_participants!inner(
+                user_id,
+                user:profiles!conversation_participants_user_id_fkey(
+                  id,
+                  email,
+                  display_name,
+                  avatar_url
+                )
+              )
+            `
+            )
+            .contains("participant_ids", [user.id])
+            .order("updated_at", { ascending: false });
+
+          if (!historyError && conversations) {
+            const users: ChatUser[] = [];
+            conversations.forEach((conversation) => {
+              const otherParticipants = conversation.conversation_participants
+                .filter((p: any) => p.user_id !== user.id)
+                .map((p: any) => ({
+                  id: p.user.id,
+                  email: p.user.email,
+                  display_name: p.user.display_name,
+                  avatar_url: p.user.avatar_url,
+                  conversation_id: conversation.id,
+                }));
+              users.push(...otherParticipants);
+            });
+            setChatUsers(users);
+          }
+        } catch (historyError) {
+          console.error("Error refreshing chat history:", historyError);
+        }
 
         return {
           success: true,
@@ -311,7 +304,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: "Failed to accept chat request" };
       }
     },
-    [supabase, user, fetchChatHistory]
+    [supabase, user]
   );
 
   // Ignore chat request
@@ -342,6 +335,59 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setPendingRequests((prev) => prev.filter((req) => req.id !== requestId));
   }, []);
 
+  // Refresh chat history - safe to call from components
+  const refreshChatHistory = useCallback(async () => {
+    if (!user || !supabase) return;
+    
+    console.log("refreshChatHistory called");
+    setIsLoadingUsers(true);
+    try {
+      const { data: conversations, error } = await supabase
+        .from("conversations")
+        .select(
+          `
+          id,
+          created_at,
+          updated_at,
+          participant_ids,
+          conversation_participants!inner(
+            user_id,
+            user:profiles!conversation_participants_user_id_fkey(
+              id,
+              email,
+              display_name,
+              avatar_url
+            )
+          )
+        `
+        )
+        .contains("participant_ids", [user.id])
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+
+      const users: ChatUser[] = [];
+      conversations?.forEach((conversation) => {
+        const otherParticipants = conversation.conversation_participants
+          .filter((p: any) => p.user_id !== user.id)
+          .map((p: any) => ({
+            id: p.user.id,
+            email: p.user.email,
+            display_name: p.user.display_name,
+            avatar_url: p.user.avatar_url,
+            conversation_id: conversation.id,
+          }));
+        users.push(...otherParticipants);
+      });
+
+      setChatUsers(users);
+    } catch (error) {
+      console.error("Error refreshing chat history:", error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, [supabase, user]);
+
   // Initialize chat requests subscription
   useEffect(() => {
     if (!user || !supabase || hasInitializedRequests.current) {
@@ -351,7 +397,55 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     hasInitializedRequests.current = true;
 
     // Fetch initial data
-    fetchChatRequests();
+    const fetchInitialRequests = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("chat_requests")
+          .select(
+            `
+            id,
+            requester_id,
+            recipient_id,
+            message,
+            status,
+            created_at,
+            responded_at,
+            requester:profiles!chat_requests_requester_id_fkey(
+              id,
+              display_name,
+              avatar_url,
+              email
+            )
+          `
+          )
+          .eq("recipient_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          if (
+            error.code === "PGRST116" ||
+            error.message?.includes('relation "chat_requests" does not exist')
+          ) {
+            console.log(
+              "Chat requests table not found. Please run the database setup first."
+            );
+            setPendingRequests([]);
+          } else {
+            throw error;
+          }
+        } else {
+          setPendingRequests((data as unknown as ChatRequest[]) || []);
+        }
+      } catch (error) {
+        console.error("Error fetching pending chat requests:", error);
+        setPendingRequests([]);
+      } finally {
+        setIsLoadingRequests(false);
+      }
+    };
+
+    fetchInitialRequests();
 
     // Subscribe to new chat requests
     const chatRequestsChannel = supabase
@@ -433,17 +527,70 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize chat history when user changes
   useEffect(() => {
+    console.log("Chat history useEffect triggered", { user: user?.id, supabase: !!supabase, hasInitialized: hasInitializedUsers.current });
     if (!user || !supabase || hasInitializedUsers.current) {
       return;
     }
 
     hasInitializedUsers.current = true;
-    fetchChatHistory();
+
+    // Fetch chat history directly in the effect
+    const fetchInitialChatHistory = async () => {
+      console.log("fetchInitialChatHistory called");
+      setIsLoadingUsers(true);
+      try {
+        const { data: conversations, error } = await supabase
+          .from("conversations")
+          .select(
+            `
+            id,
+            created_at,
+            updated_at,
+            participant_ids,
+            conversation_participants!inner(
+              user_id,
+              user:profiles!conversation_participants_user_id_fkey(
+                id,
+                email,
+                display_name,
+                avatar_url
+              )
+            )
+          `
+          )
+          .contains("participant_ids", [user.id])
+          .order("updated_at", { ascending: false });
+
+        if (error) throw error;
+
+        const users: ChatUser[] = [];
+        conversations?.forEach((conversation) => {
+          const otherParticipants = conversation.conversation_participants
+            .filter((p: any) => p.user_id !== user.id)
+            .map((p: any) => ({
+              id: p.user.id,
+              email: p.user.email,
+              display_name: p.user.display_name,
+              avatar_url: p.user.avatar_url,
+              conversation_id: conversation.id,
+            }));
+          users.push(...otherParticipants);
+        });
+
+        setChatUsers(users);
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchInitialChatHistory();
 
     return () => {
       hasInitializedUsers.current = false;
     };
-  }, [user?.id, supabase, fetchChatHistory]);
+  }, [user?.id, supabase]);
 
   const value: ChatContextType = {
     pendingRequests,
@@ -451,7 +598,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     removeRequest,
     chatUsers,
     isLoadingUsers,
-    fetchChatHistory,
+    refreshChatHistory,
     startNewChat,
     acceptChatRequest,
     ignoreChatRequest,
