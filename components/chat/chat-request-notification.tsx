@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSupabase } from '@/lib/auth-provider';
+import { useChat } from '@/lib/chat-context';
 import { toast } from 'sonner';
 import { Check, X, MessageCircle } from 'lucide-react';
 
@@ -29,7 +29,7 @@ interface ChatRequestNotificationProps {
 }
 
 export default function ChatRequestNotification({ request, onClose }: ChatRequestNotificationProps) {
-  const { supabase, user } = useSupabase();
+  const { acceptChatRequest, ignoreChatRequest, removeRequest } = useChat();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -40,22 +40,23 @@ export default function ChatRequestNotification({ request, onClose }: ChatReques
   };
 
   const handleAccept = async () => {
-    if (!user || isProcessing) return;
+    if (isProcessing) return;
 
     setIsProcessing(true);
     try {
-      // Call the accept_chat_request function
-      const { data: conversationId, error } = await supabase
-        .rpc('accept_chat_request', { request_id: request.id });
-
-      if (error) throw error;
-
-      toast.success('Chat request accepted! Starting conversation...');
-      onClose();
+      const result = await acceptChatRequest(request.id);
       
-      // Navigate to the new conversation
-      if (conversationId) {
-        router.push(`/chat/${conversationId}`);
+      if (result.success) {
+        toast.success(result.message);
+        removeRequest(request.id);
+        onClose();
+        
+        // Navigate to the new conversation
+        if (result.conversationId) {
+          router.push(`/chat/${result.conversationId}`);
+        }
+      } else {
+        toast.error(result.message);
       }
     } catch (error: any) {
       console.error('Error accepting chat request:', error);
@@ -66,18 +67,19 @@ export default function ChatRequestNotification({ request, onClose }: ChatReques
   };
 
   const handleIgnore = async () => {
-    if (!user || isProcessing) return;
+    if (isProcessing) return;
 
     setIsProcessing(true);
     try {
-      // Call the ignore_chat_request function
-      const { error } = await supabase
-        .rpc('ignore_chat_request', { request_id: request.id });
-
-      if (error) throw error;
-
-      toast.success('Chat request ignored');
-      onClose();
+      const result = await ignoreChatRequest(request.id);
+      
+      if (result.success) {
+        toast.success(result.message);
+        removeRequest(request.id);
+        onClose();
+      } else {
+        toast.error(result.message);
+      }
     } catch (error: any) {
       console.error('Error ignoring chat request:', error);
       toast.error('Failed to ignore chat request');

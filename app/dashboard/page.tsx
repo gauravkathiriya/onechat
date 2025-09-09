@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/auth-provider';
+import { useChat } from '@/lib/chat-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -67,173 +68,41 @@ interface ProfileData {
 
 export default function DashboardPage() {
     const { supabase, user, isLoading } = useSupabase();
+    const { chatUsers, isLoadingUsers, fetchChatHistory, startNewChat } = useChat();
     const router = useRouter();
-    const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
     const [newUserEmail, setNewUserEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !user) {
             router.push('/login');
-        } else if (user && !hasFetchedHistory) {
-            // Fetch chat history only once when component mounts and user is available
-            fetchChatHistory();
-            setHasFetchedHistory(true);
         }
-    }, [isLoading, user, router, hasFetchedHistory]); // Added hasFetchedHistory to dependencies
+    }, [isLoading, user, router]);
 
-    const fetchChatHistory = async () => {
-        if (!user) return;
 
-        try {
-            // Get all conversations where the current user is involved
-            const { data: conversations, error } = await supabase
-                .from('conversations')
-                .select(`
-                    id,
-                    participants:conversation_participants(
-                        user_id,
-                        user:profiles(id, email, display_name, avatar_url)
-                    ),
-                    last_message:messages(
-                        content, 
-                        created_at
-                    )
-                `)
-                .contains('participant_ids', [user.id])
-                .order('updated_at', { ascending: false });
-
-            if (error) throw error;
-            // Process the conversations to extract other participants
-            const processedUsers: ChatUser[] = [];
-
-            conversations?.forEach(conversation => {
-                // Find the other participants (not the current user)
-                const otherParticipants = conversation.participants.filter(
-                    p => p.user_id !== user.id
-                );
-
-                otherParticipants.forEach(participant => {
-                    // Handle the user data structure correctly
-                    if (participant.user) {
-                        const lastMessage = conversation.last_message?.[0];
-
-                        // The user field might be an array or a single object
-                        const userDataArray = Array.isArray(participant.user)
-                            ? participant.user
-                            : [participant.user];
-
-                        userDataArray.forEach(userData => {
-                            processedUsers.push({
-                                id: userData.id,
-                                email: userData.email,
-                                display_name: userData.display_name,
-                                avatar_url: userData.avatar_url,
-                                last_message: lastMessage?.content,
-                                last_message_time: lastMessage?.created_at,
-                                conversation_id: conversation.id
-                            });
-                        });
-                    }
-                });
-            });
-
-            setChatUsers(processedUsers);
-        } catch (error: any) {
-            console.error('Error fetching chat history:', error);
-            toast.error('Failed to load chat history');
-        }
-    };
-
-    const startNewChat = async (e: React.FormEvent) => {
+    const handleStartNewChat = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newUserEmail.trim() || !user) return;
+        if (!newUserEmail.trim()) return;
 
         setIsSubmitting(true);
 
         try {
-            // Check if the user exists
-            const { data: targetUser, error: userError } = await supabase
-                .from('profiles')
-                .select('id, email, display_name, avatar_url')
-                .eq('email', newUserEmail.toLowerCase())
-                .single();
-
-            if (userError || !targetUser) {
-                toast.error('User not found with that email');
-                setIsSubmitting(false);
-                return;
-            }
-
-            // Check if user is trying to chat with themselves
-            if (targetUser.id === user.id) {
-                toast.error('You cannot start a chat with yourself');
-                setIsSubmitting(false);
-                return;
-            }
-
-            // Check if a conversation already exists
-            const { data: existingConversation, error: convError } = await supabase
-                .from('conversations')
-                .select('id')
-                .contains('participant_ids', [user.id, targetUser.id])
-                .single();
-
-            // If conversation already exists, navigate to it
-            if (existingConversation) {
+            const result = await startNewChat(newUserEmail);
+            
+            if (result.success) {
                 setNewUserEmail('');
                 setIsDialogOpen(false);
-                router.push(`/chat/${existingConversation.id}`);
-                return;
-            }
-
-            // Check if there's already a pending chat request
-            const { data: existingRequest, error: requestError } = await supabase
-                .from('chat_requests')
-                .select('id, status')
-                .eq('requester_id', user.id)
-                .eq('recipient_id', targetUser.id)
-                .eq('status', 'pending')
-                .single();
-
-            if (requestError && requestError.code !== 'PGRST116') {
-                // If it's not a "table doesn't exist" error, throw it
-                throw requestError;
-            }
-
-            if (existingRequest) {
-                toast.error('You already have a pending chat request with this user');
-                setIsSubmitting(false);
-                return;
-            }
-
-            // Create a chat request
-            const { data: chatRequest, error: createError } = await supabase
-                .from('chat_requests')
-                .insert({
-                    requester_id: user.id,
-                    recipient_id: targetUser.id,
-                    message: `Hi! I'd like to start a conversation with you.`
-                })
-                .select('id')
-                .single();
-
-            if (createError) {
-                if (createError.code === 'PGRST116' || createError.message?.includes('relation "chat_requests" does not exist')) {
-                    toast.error('Chat requests feature is not set up yet. Please run the database setup first.');
-                    setIsSubmitting(false);
-                    return;
+                toast.success(result.message);
+                
+                // If there's a conversation ID, navigate to it
+                if (result.conversationId) {
+                    router.push(`/chat/${result.conversationId}`);
                 }
-                throw createError;
+            } else {
+                toast.error(result.message);
             }
-
-            setNewUserEmail('');
-            setIsDialogOpen(false);
-            toast.success(`Chat request sent to ${targetUser.display_name || targetUser.email}! They will receive a notification to accept or ignore your request.`);
-
         } catch (error: any) {
             console.error('Error starting new chat:', error);
             toast.error('Failed to send chat request');
@@ -271,7 +140,7 @@ export default function DashboardPage() {
         return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-    if (isLoading) {
+    if (isLoading || isLoadingUsers) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-pulse flex flex-col items-center">
@@ -402,14 +271,11 @@ export default function DashboardPage() {
                                 size="icon"
                                 onClick={async () => {
                                     try {
-                                        setHasFetchedHistory(false);
                                         await fetchChatHistory();
                                         toast.success('Conversations refreshed');
                                     } catch (error) {
                                         console.error('Error refreshing conversations:', error);
                                         toast.error('Failed to refresh conversations');
-                                    } finally {
-                                        setHasFetchedHistory(true);
                                     }
                                 }}
                                 title="Refresh conversations"
@@ -428,7 +294,7 @@ export default function DashboardPage() {
                                     <DialogHeader>
                                         <DialogTitle>Start a new conversation</DialogTitle>
                                     </DialogHeader>
-                                    <form onSubmit={startNewChat} className="space-y-4 mt-4">
+                                    <form onSubmit={handleStartNewChat} className="space-y-4 mt-4">
                                         <div className="space-y-2">
                                             <label htmlFor="email" className="text-sm font-medium">
                                                 Enter user email

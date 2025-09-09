@@ -1,12 +1,12 @@
 'use client';
 
-import { useChatRequests } from '@/lib/use-chat-requests';
+import { useChat } from '@/lib/chat-context';
 import ChatRequestNotification from './chat-request-notification';
 
 export default function ChatRequestManager() {
-  const { pendingRequests, isLoading } = useChatRequests();
+  const { pendingRequests, isLoadingRequests } = useChat();
 
-  if (isLoading || pendingRequests.length === 0) {
+  if (isLoadingRequests || pendingRequests.length === 0) {
     return null;
   }
 

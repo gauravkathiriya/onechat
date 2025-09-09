@@ -4,6 +4,7 @@ import "./globals.css";
 import { SupabaseProvider } from "@/lib/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { ChatProvider } from "@/lib/chat-context";
 import ChatRequestManager from "@/components/chat/chat-request-manager";
 
 const geistSans = Geist({
@@ -38,9 +39,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SupabaseProvider>
-            {children}
-            <ChatRequestManager />
-            <Toaster />
+            <ChatProvider>
+              {children}
+              <ChatRequestManager />
+              <Toaster />
+            </ChatProvider>
           </SupabaseProvider>
         </ThemeProvider>
       </body>
