@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSupabase } from "./auth-provider";
 
 interface ChatRequest {
@@ -23,13 +23,11 @@ export function useChatRequests() {
   const { supabase, user } = useSupabase();
   const [pendingRequests, setPendingRequests] = useState<ChatRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasInitialized = useRef(false);
 
-  // Fetch pending chat requests for the current user
-  const fetchPendingRequests = useCallback(async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
+  // Fetch initial data
+  const fetchData = useCallback(async () => {
+    if (!user || !supabase) return;
 
     try {
       const { data, error } = await supabase
@@ -69,7 +67,7 @@ export function useChatRequests() {
           throw error;
         }
       } else {
-        setPendingRequests([]);
+        setPendingRequests((data as unknown as ChatRequest[]) || []);
       }
     } catch (error) {
       console.error("Error fetching pending chat requests:", error);
@@ -81,10 +79,14 @@ export function useChatRequests() {
 
   // Set up real-time subscription for chat requests
   useEffect(() => {
-    if (!user) return;
+    if (!user || !supabase || hasInitialized.current) {
+      return;
+    }
+
+    hasInitialized.current = true;
 
     // Fetch initial data
-    fetchPendingRequests();
+    fetchData();
 
     // Subscribe to new chat requests
     const chatRequestsChannel = supabase
@@ -98,6 +100,7 @@ export function useChatRequests() {
           filter: `recipient_id=eq.${user.id}`,
         },
         (payload) => {
+          console.log("New chat request received:", payload);
           // Fetch the complete request with requester details
           supabase
             .from("chat_requests")
@@ -129,7 +132,11 @@ export function useChatRequests() {
                 return;
               }
               if (data) {
-                setPendingRequests((data as unknown as ChatRequest[]) ?? []);
+                console.log("Adding new chat request to state:", data);
+                setPendingRequests((prev) => [
+                  data as unknown as ChatRequest,
+                  ...prev,
+                ]);
               }
             });
         }
@@ -151,12 +158,13 @@ export function useChatRequests() {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {});
 
     return () => {
+      hasInitialized.current = false;
       supabase.removeChannel(chatRequestsChannel);
     };
-  }, []);
+  }, [user?.id, supabase, fetchData]);
 
   // Remove a request from the pending list (for UI updates)
   const removeRequest = (requestId: string) => {
@@ -167,6 +175,5 @@ export function useChatRequests() {
     pendingRequests,
     isLoading,
     removeRequest,
-    refetch: fetchPendingRequests,
   };
 }
