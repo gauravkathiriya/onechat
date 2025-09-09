@@ -4,6 +4,7 @@ import "./globals.css";
 import { SupabaseProvider } from "@/lib/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme-provider";
+import ChatRequestManager from "@/components/chat/chat-request-manager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
         >
           <SupabaseProvider>
             {children}
+            <ChatRequestManager />
             <Toaster />
           </SupabaseProvider>
         </ThemeProvider>

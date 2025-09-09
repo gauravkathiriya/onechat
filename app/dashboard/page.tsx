@@ -168,6 +168,13 @@ export default function DashboardPage() {
                 return;
             }
 
+            // Check if user is trying to chat with themselves
+            if (targetUser.id === user.id) {
+                toast.error('You cannot start a chat with yourself');
+                setIsSubmitting(false);
+                return;
+            }
+
             // Check if a conversation already exists
             const { data: existingConversation, error: convError } = await supabase
                 .from('conversations')
@@ -175,52 +182,61 @@ export default function DashboardPage() {
                 .contains('participant_ids', [user.id, targetUser.id])
                 .single();
 
-            let conversationId = existingConversation?.id;
-
-            // If no conversation exists, create a new one
-            if (!existingConversation) {
-                const { data: newConversation, error: createError } = await supabase
-                    .from('conversations')
-                    .insert({
-                        participant_ids: [user.id, targetUser.id],
-                        created_by: user.id,
-                    })
-                    .select('id')
-                    .single();
-
-                if (createError) throw createError;
-
-                conversationId = newConversation.id;
-
-                // Add participants to the conversation
-                await supabase.from('conversation_participants').insert([
-                    { conversation_id: conversationId, user_id: user.id },
-                    { conversation_id: conversationId, user_id: targetUser.id }
-                ]);
+            // If conversation already exists, navigate to it
+            if (existingConversation) {
+                setNewUserEmail('');
+                setIsDialogOpen(false);
+                router.push(`/chat/${existingConversation.id}`);
+                return;
             }
 
-            // Add the user to the chat history if not already there
-            if (!chatUsers.some(chatUser => chatUser.id === targetUser.id)) {
-                setChatUsers(prev => [
-                    {
-                        id: targetUser.id,
-                        email: targetUser.email,
-                        display_name: targetUser.display_name,
-                        avatar_url: targetUser.avatar_url,
-                        conversation_id: conversationId
-                    },
-                    ...prev
-                ]);
+            // Check if there's already a pending chat request
+            const { data: existingRequest, error: requestError } = await supabase
+                .from('chat_requests')
+                .select('id, status')
+                .eq('requester_id', user.id)
+                .eq('recipient_id', targetUser.id)
+                .eq('status', 'pending')
+                .single();
+
+            if (requestError && requestError.code !== 'PGRST116') {
+                // If it's not a "table doesn't exist" error, throw it
+                throw requestError;
+            }
+
+            if (existingRequest) {
+                toast.error('You already have a pending chat request with this user');
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Create a chat request
+            const { data: chatRequest, error: createError } = await supabase
+                .from('chat_requests')
+                .insert({
+                    requester_id: user.id,
+                    recipient_id: targetUser.id,
+                    message: `Hi! I'd like to start a conversation with you.`
+                })
+                .select('id')
+                .single();
+
+            if (createError) {
+                if (createError.code === 'PGRST116' || createError.message?.includes('relation "chat_requests" does not exist')) {
+                    toast.error('Chat requests feature is not set up yet. Please run the database setup first.');
+                    setIsSubmitting(false);
+                    return;
+                }
+                throw createError;
             }
 
             setNewUserEmail('');
             setIsDialogOpen(false);
+            toast.success(`Chat request sent to ${targetUser.display_name || targetUser.email}! They will receive a notification to accept or ignore your request.`);
 
-            // Navigate to the chat with this user
-            router.push(`/chat/${conversationId}`);
         } catch (error: any) {
             console.error('Error starting new chat:', error);
-            toast.error('Failed to start new chat');
+            toast.error('Failed to send chat request');
         } finally {
             setIsSubmitting(false);
         }
