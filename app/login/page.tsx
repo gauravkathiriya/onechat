@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabase } from '@/lib/auth-provider';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AtSign, Lock, Github, Mail } from 'lucide-react';
 import Image from 'next/image';
@@ -40,6 +40,7 @@ type LoginFormValues = {
 function LoginPageContent() {
   const { supabase } = useSupabase();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema) as any,
@@ -215,7 +216,12 @@ function LoginPageContent() {
                       Remember me
                     </Label>
                   </div>
-                  <Button variant="link" className="p-0 h-auto text-sm text-blue-600 dark:text-blue-400" type="button">
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-sm text-blue-600 dark:text-blue-400" 
+                    type="button"
+                    onClick={() => router.push('/forgot-password')}
+                  >
                     Forgot password?
                   </Button>
                 </div>
